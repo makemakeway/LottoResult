@@ -64,8 +64,6 @@ class ViewController: UIViewController {
     @IBOutlet weak var bonusPrizeNumber: UILabel!
     @IBOutlet weak var bonusNumberView: UIView!
     
-    @IBOutlet weak var numbersStack: UIStackView!
-    
     //MARK: Method
     
     func makePickerView() {
@@ -166,11 +164,11 @@ class ViewController: UIViewController {
     
     func settingHeader() {
         headerView.layer.shadowColor = UIColor.black.cgColor
-        headerView.layer.shadowRadius = 5
+        headerView.layer.shadowRadius = 10
         headerView.layer.shadowOffset = .zero
-        headerView.layer.shadowPath = UIBezierPath(rect: headerView.bounds).cgPath
-        headerView.layer.shadowOpacity = 0.5
-        headerView.layer.cornerRadius = 10
+        headerView.layer.shadowPath = UIBezierPath(rect: CGRect(x: 0, y: 0, width: headerView.bounds.width, height: headerView.bounds.height)).cgPath
+        headerView.layer.shadowOpacity = 0.3
+        headerView.layer.cornerRadius = 5
     }
     
     func settingResultView() {
@@ -193,11 +191,13 @@ class ViewController: UIViewController {
     func settingBall(label: UILabel, ball: UIView, num: Int) {
         let width = ball.frame.size.width / 2
         
+        ball.backgroundColor = pickBallColor(num: num)
+        ball.layer.cornerRadius = width
         label.textColor = .white
         label.text = String(num)
         label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
-        ball.backgroundColor = pickBallColor(num: num)
-        ball.layer.cornerRadius = width
+        
+        view.layoutIfNeeded()
     }
     
     func pickBallColor(num: Int) -> UIColor {
@@ -225,10 +225,7 @@ class ViewController: UIViewController {
         
         fetchLottoData()
         textFieldConfig()
-        
-        
         self.lottoTextField.delegate = self
-        
         self.lottoDrawRange = Array<Int>(1...recentLottoResult).reversed()
         
         let gesture = UITapGestureRecognizer()
@@ -236,7 +233,6 @@ class ViewController: UIViewController {
         self.view.addGestureRecognizer(gesture)
         
     }
-
 
 }
 
