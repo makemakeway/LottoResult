@@ -14,16 +14,15 @@ class ViewController: UIViewController {
     
     //MARK: Property
     
-    var upToDate = UserDefaults.standard.integer(forKey: "latest")
-    
     var lottoData: LottoModel? {
         didSet {
-            settingLayout()
+            settingResultView()
         }
     }
     
     var lottoDrawRange = Array<Int>()
     
+    var recentLottoResult = 986
     
     let dateFormatter: DateFormatter = {
         let df = DateFormatter()
@@ -34,6 +33,7 @@ class ViewController: UIViewController {
         return df
     }()
     
+    var firstLottoDate: Date?
     
     @IBOutlet weak var lottoTextField: UITextField!
     
@@ -85,15 +85,43 @@ class ViewController: UIViewController {
 
     
     func calculateDate() {
-        let todayString = dateFormatter.string(from: Date())
-        guard let today = dateFormatter.date(from: todayString)?.addingTimeInterval(3600 * 9) else {
-            return
+        
+        // 현재 한국 시간으로 맞춰준다.
+        let now = Date().addingTimeInterval(3600*9)
+        
+        // 토요일을 찾아야 하니까 Weekday값을 7로 설정
+        let desiredWeekday = 7
+        
+        // 오늘의 Weekday값
+        let weekday = Calendar.current.component(.weekday, from: now)
+        
+        guard let firstLottoDate = firstLottoDate else { return }
+        
+        calculateRecentLottoResult(source: firstLottoDate, target: now)
+        
+        // 오늘이 토요일인지 확인
+        if weekday == desiredWeekday {
+            
+            
+            let currentTime = Calendar.current.component(.hour, from: now)
+
+            
+            // 당첨 발표 15분 뒤인 21시가 지났는지 확인
+            if currentTime < 21 {
+                // 당첨 발표 전이라면, 토요일이 되면서 늘어난 recentLottoResult값을 1 낮춰준다.
+                print("최신 회차 발표 전입니다.")
+                self.recentLottoResult -= 1
+            }
         }
         
+    }
+    
+    func calculateRecentLottoResult(source: Date, target: Date) {
+        // source부터 target까지 몇초가 지났는지
+        let distance = source.distance(to: target)
         
-        print(recentSaturday)
-        
-        
+        // 몇주가 지났는지 계산 후, 1회부터 시작했으므로 1을 더해준다.
+        self.recentLottoResult = Int(distance / 86400.0 / 7) + 1
     }
     
     func textFieldConfig() {
@@ -106,11 +134,20 @@ class ViewController: UIViewController {
         var text = lottoTextField.text!
         
         if text.isEmpty {
-            text = "900"
+            text = "\(recentLottoResult)"
         }
         
+        // 유저디폴트 값이 있다면?
+        if let data = UserDefaults.standard.value(forKey: text) as? Data {
+            self.lottoData = try? PropertyListDecoder().decode(LottoModel.self, from: data)
+            
+            print("유저디폴트 값이 있습니다.")
+            return
+        }
+        
+        
+        print("유저디폴트 값이 없습니다.")
         LottoAPIManager.shared.fetchLottoData(count: text) { json in
-            print(json)
             self.lottoData = LottoModel(drwtNo1: json["drwtNo1"].intValue,
                                         drwtNo2: json["drwtNo2"].intValue,
                                         drwtNo3: json["drwtNo3"].intValue,
@@ -120,21 +157,24 @@ class ViewController: UIViewController {
                                         bnusNo: json["bnusNo"].intValue,
                                         drwNoDate: json["drwNoDate"].stringValue,
                                         drwNo: json["drwNo"].intValue)
+            UserDefaults.standard.setValue(try? PropertyListEncoder().encode(self.lottoData), forKey: text)
         }
         
     }
     
-    func settingLayout() {
-        guard let data = self.lottoData else {
-            return
-        }
-        
+    func settingHeader() {
         headerView.layer.shadowColor = UIColor.black.cgColor
         headerView.layer.shadowRadius = 5
         headerView.layer.shadowOffset = .zero
         headerView.layer.shadowPath = UIBezierPath(rect: headerView.bounds).cgPath
         headerView.layer.shadowOpacity = 0.5
         headerView.layer.cornerRadius = 10
+    }
+    
+    func settingResultView() {
+        guard let data = self.lottoData else {
+            return
+        }
         
         settingBall(label: firstPrizeNumber, ball: firstNumberView, num: data.drwtNo1)
         settingBall(label: secondPrizeNumber, ball: secondNumberView, num: data.drwtNo2)
@@ -149,13 +189,13 @@ class ViewController: UIViewController {
     }
     
     func settingBall(label: UILabel, ball: UIView, num: Int) {
-        let width = ball.frame.size.width / 2
+//        let width = ball.frame.size.width / 2
         
         label.textColor = .white
         label.text = String(num)
         label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         ball.backgroundColor = pickBallColor(num: num)
-        ball.layer.cornerRadius = width
+//        ball.layer.cornerRadius = width
     }
     
     func pickBallColor(num: Int) -> UIColor {
@@ -177,11 +217,17 @@ class ViewController: UIViewController {
     //MARK: LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.firstLottoDate = self.dateFormatter.date(from: "2002-12-07 00")
+        calculateDate()
+        settingHeader()
+        
         fetchLottoData()
         textFieldConfig()
+        
+        
         self.lottoTextField.delegate = self
-        calculateDate()
-        self.lottoDrawRange = Array<Int>(1...100).reversed()
+        
+        self.lottoDrawRange = Array<Int>(1...recentLottoResult).reversed()
         
         let gesture = UITapGestureRecognizer()
         gesture.delegate = self

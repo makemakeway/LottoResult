@@ -8,7 +8,7 @@
 import Foundation
 
 
-struct LottoModel {
+struct LottoModel: Codable {
     var drwtNo1: Int
     var drwtNo2: Int
     var drwtNo3: Int
