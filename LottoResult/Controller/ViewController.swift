@@ -137,6 +137,8 @@ class ViewController: UIViewController {
             text = "\(recentLottoResult)"
         }
         
+
+        
         // 유저디폴트 값이 있다면?
         if let data = UserDefaults.standard.value(forKey: text) as? Data {
             self.lottoData = try? PropertyListDecoder().decode(LottoModel.self, from: data)
@@ -189,13 +191,13 @@ class ViewController: UIViewController {
     }
     
     func settingBall(label: UILabel, ball: UIView, num: Int) {
-//        let width = ball.frame.size.width / 2
+        let width = ball.frame.size.width / 2
         
         label.textColor = .white
         label.text = String(num)
         label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         ball.backgroundColor = pickBallColor(num: num)
-//        ball.layer.cornerRadius = width
+        ball.layer.cornerRadius = width
     }
     
     func pickBallColor(num: Int) -> UIColor {
@@ -242,10 +244,14 @@ class ViewController: UIViewController {
 extension ViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField.text!.isEmpty {
-            makeAlert(title: "오류", message: "조회할 회차를 입력해주세요.", buttonTitle1: "확인")
+            makeAlert(title: "오류", message: "조회할 회차를 선택해주세요.", buttonTitle1: "확인")
             return false
         } else if Int(textField.text!) == nil {
             makeAlert(title: "오류", message: "숫자만 입력할 수 있습니다.", buttonTitle1: "확인")
+            return false
+        } else if Int(textField.text!)! > recentLottoResult || Int(textField.text!)! < 1 {
+            makeAlert(title: "오류", message: "해당하는 회차 정보가 없습니다.", buttonTitle1: "확인")
+            return false
         }
         
         fetchLottoData()
