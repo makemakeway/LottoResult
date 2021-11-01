@@ -122,12 +122,6 @@ class ViewController: UIViewController {
         self.recentLottoResult = Int(distance / 86400.0 / 7) + 1
     }
     
-    func textFieldConfig() {
-        self.lottoTextField.keyboardType = .numberPad
-        self.lottoTextField.autocorrectionType = .no
-        self.lottoTextField.autocapitalizationType = .none
-    }
-    
     func fetchLottoData() {
         var text = lottoTextField.text!
         
@@ -196,8 +190,6 @@ class ViewController: UIViewController {
         label.textColor = .white
         label.text = String(num)
         label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
-        
-        view.layoutIfNeeded()
     }
     
     func pickBallColor(num: Int) -> UIColor {
@@ -224,7 +216,6 @@ class ViewController: UIViewController {
         settingHeader()
         
         fetchLottoData()
-        textFieldConfig()
         self.lottoTextField.delegate = self
         self.lottoDrawRange = Array<Int>(1...recentLottoResult).reversed()
         
@@ -232,6 +223,12 @@ class ViewController: UIViewController {
         gesture.delegate = self
         self.view.addGestureRecognizer(gesture)
         
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        settingResultView()
+        view.layoutIfNeeded()
     }
 
 }
